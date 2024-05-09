@@ -1,9 +1,47 @@
-import React from 'react';
-import { View, StyleSheet, Image } from 'react-native';
-import VostcastPlayer from '../screens/VostcastPlayer'; // Corrected import path
-import { WebView } from 'react-native-webview';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { Audio } from 'expo-av';
+import { AntDesign } from '@expo/vector-icons';
 
-export default function HomeScreen() {
+const HomeScreen = () => {
+    const [sound, setSound] = useState(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+
+    useEffect(() => {
+        return sound
+            ? () => {
+                  sound.unloadAsync();
+              }
+            : undefined;
+    }, [sound]);
+
+    const playAudio = () => {
+        try {
+            const soundObject = new Audio.Sound();
+            soundObject.loadAsync(
+                { uri: 'http://s1.voscast.com:8080/stream' },
+                { shouldPlay: true }
+            );
+            soundObject.setOnPlaybackStatusUpdate(status => {
+                if (status.didJustFinish) {
+                    setIsPlaying(false);
+                }
+            });
+            setSound(soundObject);
+            setIsPlaying(true);
+        } catch (error) {
+            console.error('Failed to load the audio:', error);
+        }
+    };
+    
+    const pauseAudio = () => {
+        if (sound) {
+            sound.pauseAsync();
+            setIsPlaying(false);
+        }
+    };
+    
+
     return (
         <View style={styles.container}>
             <View style={styles.posterContainer}>
@@ -12,83 +50,48 @@ export default function HomeScreen() {
                     style={styles.posterImage}
                 />
             </View>
-            <WebView
-                originWhitelist={['file://*']}
-                source={{
-                    html: `<!DOCTYPE html>
-                    <html>
-                    <head>
-                        <style>
-                            body {
-                                background-color: black;
-                                margin: 0;
-                                padding: 0;
-                            }
-                    
-                            .container {
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                flex-direction: column;
-                                height: 100%;
-                                width: 100%;
-                            }
-                    
-                            .player-container {
-                                width: 100%;
-                                height: 100%;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                flex-direction: column;
-                            }
-                    
-                            .player-name {
-                                color: white;
-                                font-size: 20px; /* Adjust font size */
-                                margin-top: 100px; /* Adjust margin */
-                            }
-                            .player {
-                                width: 700px; 
-                                height: 1150px; 
-                            }
-                    
-                         
-                        </style>
-                    </head>
-                    <body>
-                        <div class="container">
-                            <div class="player-container">
-                                
-                                <iframe src="https://cdn.voscast.com/player/player.php?host=s1.voscast.com&port=8080&mount=/stream&autoplay=true&icecast=false" width="150" height="30" frameborder="0" scrolling="no" allow="autoplay"></iframe>
-                                <div class="player-name">Click Play to play the radio</div>
-                            </div>
-                        </div>
-                    </body>
-                    </html>
-                    `,
-                }}
-            />
+            <View style={styles.buttonContainer}>
+                <TouchableOpacity style={styles.button} onPress={playAudio}>
+                    <AntDesign name="playcircleo" size={64} color="red" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.button} onPress={pauseAudio}>
+                    <AntDesign name="pausecircleo" size={64} color="red" />
+                </TouchableOpacity>
+            </View>
         </View>
     );
-}
+};
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: 'black'
+        backgroundColor: 'black',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     posterContainer: {
         flex: 1,
-        alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'black'
+        alignItems: 'center',
+        marginBottom: 110,
     },
     posterImage: {
         width: 300,
         height: 300,
     },
-    webView: {
-        flex: 1,
+    buttonContainer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 150,
+    },
+    button: {
+        marginHorizontal: 5, // Adjust the horizontal gap as needed
     },
 });
+
+export default HomeScreen;
