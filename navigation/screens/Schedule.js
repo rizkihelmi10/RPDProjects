@@ -7,7 +7,7 @@ export default function Schedule() {
         <View style={styles.container}>
             <WebView
                 originWhitelist={['*']}
-                source={{ uri: 'https://docs.google.com/spreadsheets/d/1SDHqkTN2Fe92_QzxulPZ2KzPRIF05IKQdOLB8dPcOWE/view#gid=2127881730l' }}
+                source={{ uri: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSYiE12FRYXwdS-OZeYKhCCmrGrui-wY18BdJ_i0qrRctyGWavoOu6OD4uRs_WEwXOCAgN3MAt-ba-B/pubhtml?gid=0&single=true&rm=minimal' }}
                 style={styles.webView}
             />
         </View>
