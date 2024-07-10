@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Image, TouchableOpacity, Text, ActivityIndicator, Platform } from 'react-native';
 import { Audio } from 'expo-av';
 import { AntDesign } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
@@ -8,9 +8,37 @@ import { WebView } from 'react-native-webview';
 const HomeScreen = () => {
   const [sound, setSound] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [streamName, setStreamName] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   const [isBuffering, setIsBuffering] = useState(false);
   const [posterImageSource, setPosterImageSource] = useState(require('../../navigation/screens/Logo.png'));
+
+  const webViewContent = `
+    <html>
+      <head>
+        <style>
+          .server {
+            color: white;
+            font-size: 20px;
+            margin-top: 50px; 
+            margin-bottom: 50px;
+            text-align: center;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="server">
+          <script type="text/javascript" src="https://cdn.voscast.com/stats/display.js?key=31b8dac67aae02545f7e5a44e2f8ec7c&stats=servertitle"></script>
+        </div>
+      </body>
+    </html>
+  `;
+
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const timer = setTimeout(() => setIsLoading(false), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   useEffect(() => {
     const loadAudio = async () => {
@@ -67,8 +95,6 @@ const HomeScreen = () => {
       console.error('Failed to play the audio:', error);
     }
   };
-  
-  
 
   const pauseAudio = async () => {
     if (sound) {
@@ -84,9 +110,10 @@ const HomeScreen = () => {
       text1: message,
     });
   };
+
   const handleWebViewMessage = (event) => {
     const data = event.nativeEvent.data;
-  
+
     switch (true) {
       case data.includes('Dunia Kuliner'):
         setPosterImageSource(require('../../navigation/screens/dukunn.png'));
@@ -127,16 +154,49 @@ const HomeScreen = () => {
     }
   };
 
+  if (Platform.OS === 'web') {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#000' }}>
+        <View style={styles.posterContainer}>
+          <Image source={posterImageSource} style={styles.posterImage} />
+          {isBuffering && <ActivityIndicator size="large" color="black" />}
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          {isLoading ? (
+            <ActivityIndicator size="large" color="black" />
+          ) : (
+            <View style={{ flex: 1, width: '100%' }}>
+              <iframe
+                src={`data:text/html;charset=utf-8,${encodeURIComponent(webViewContent)}`}
+                style={{ width: '100%', height: '60%', flex: 1, marginTop: -150 }}
+              />
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity style={styles.button} onPress={playAudio}>
+                  <AntDesign name="playcircleo" size={64} color="red" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.button} onPress={pauseAudio}>
+                  <AntDesign name="pausecircleo" size={64} color="red" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <View style={styles.posterContainer}>
-      <Image source={posterImageSource} style={styles.posterImage} />
-        {isBuffering && <ActivityIndicator size="large" color="white" />}
-      </View>
+      {Platform.OS !== 'web' && (
+        <View style={styles.posterContainer}>
+          <Image source={posterImageSource} style={styles.posterImage} />
+          {isBuffering && <ActivityIndicator size="large" color="black" />}
+        </View>
+      )}
       <View style={styles.webViewContainer}>
         <WebView
           originWhitelist={['*']}
-          source={require('../../assets/servertitle.html')}
+          source={{ html: webViewContent }}
           style={styles.webView}
           onMessage={handleWebViewMessage}
         />
@@ -157,33 +217,32 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'black',
-    justifyContent: 'center', // Center components vertically
-    alignItems: 'center',
-  },
-  posterContainer: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 200, // Reduced top margin
+  
+  },
+  posterContainer: {
+    flex: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   posterImage: {
-    width: 300,
-    height: 300,
+    width: 200,
+    height: 200,
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 180, // Reduced bottom margin
+    marginBottom: 200,
   },
   button: {
     marginHorizontal: 10,
   },
   webViewContainer: {
-    flex: 1, // Increased the height of the WebView container
-    backgroundColor: 'black',
-    marginTop: 100, // Reduced top margin
+    flex: 1,
     width: '100%',
+    backgroundColor: 'black',
   },
   webView: {
     flex: 1,
